@@ -3,7 +3,7 @@ language: python
 python:
   - "3.5"
 install:
-  - awscli
+  - pip install awscli
 
 script:
   - touch ~/.aws/credentials
