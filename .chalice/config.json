@@ -1,0 +1,5 @@
+{
+  "lambda_arn": "arn:aws:lambda:ap-southeast-2:538648309747:function:social-media-scraper", 
+  "app_name": "social-media-scraper", 
+  "stage": "dev"
+}

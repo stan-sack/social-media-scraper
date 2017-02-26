@@ -1,0 +1,17 @@
+sudo: false
+language: python
+python:
+  - "3.5"
+install:
+  - awscli
+
+script:
+  - touch ~/.aws/credentials
+  - echo "[default]" >> ~/.aws/credentials
+  - echo "aws_access_key_id = $AWS_ID" >> ~/.aws/credentials
+  - echo "aws_secret_access_key = $AWS_SECRET" >> ~/.aws/credentials
+  - touch ~/.aws/config
+  - echo "[default]" >> ~/.aws/config
+  - echo "output = json" >> ~/.aws/config
+  - echo "region = ap-southeast-2" >> ~/.aws/config
+  - chalice deploy
