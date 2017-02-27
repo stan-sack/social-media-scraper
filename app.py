@@ -9,7 +9,7 @@ app = Chalice(app_name='social-media-scraper')
 USER_ID = 'AnthonyBourdain'
 
 
-@app.route('/')
+@app.route('/', cors=True)
 def index():
     try:
         encrypted_fb_id = os.environ['APP_ID']
