@@ -1,5 +1,7 @@
 from chalice import Chalice
+# from requests import async
 import requests
+import grequests
 import os
 import json
 import boto3
@@ -9,8 +11,8 @@ app = Chalice(app_name='social-media-scraper')
 USER_ID = 'AnthonyBourdain'
 
 
-@app.route('/', cors=True)
-def index():
+@app.route('/fb/photos', cors=True)
+def get_facebook_photos():
     try:
         encrypted_fb_id = os.environ['APP_ID']
         decrypted_fb_id = boto3.client('kms').decrypt(CiphertextBlob=b64decode(encrypted_fb_id))['Plaintext']
@@ -50,33 +52,27 @@ def get_recent_fb_photos(fb_access_token):
             params=payload
         )
         response_dict = response.json()
-        harvest_dict_for_photos(photos, response_dict, fb_access_token)
 
         while len(photos) < 20 and 'next' in response_dict['paging']:
+            for photo in response_dict['data']:
+                if 'place' in photo.keys():
+                    photos.append({
+                        'caption': photo['place']['name'],
+                        'location': photo['place']['location'],
+                        'image_url': '{}/{}?access_token={}&fields=images'.format(FB_BASE_URL, photo['id'], fb_access_token)
+                    })
             response = requests.get(response_dict['paging']['next'])
             response_dict = response.json()
-            harvest_dict_for_photos(photos, response_dict, fb_access_token)
+        photos.append({
+            'caption': photo['place']['name'],
+            'location': photo['place']['location'],
+            'image_url': '{}/{}?access_token={}&fields=images'.format(FB_BASE_URL, photo['id'], fb_access_token)
+        })
+        requests_to_send = (grequests.get(photo['image_url']) for photo in photos)
+        results_array = grequests.map(requests_to_send)
+        for i in range(len(results_array)):
+            response_dict = results_array[i].json()
+            photos[i]['image_url'] = response_dict['images'][0]['source']
     except Exception as e:
         print(e)
     return photos
-
-
-def harvest_dict_for_photos(photo_list, response_dict, fb_access_token):
-    for photo in response_dict['data']:
-        if 'place' in photo.keys():
-            image_url_payload = {
-                'access_token': fb_access_token,
-                'fields': 'images'
-            }
-
-            response = requests.get(
-                '{}/{}'.format(FB_BASE_URL, photo['id']),
-                params=image_url_payload
-            )
-            response_dict = response.json()
-            image_url = response_dict['images'][0]['source']
-            photo_list.append({
-                'caption': photo['place']['name'],
-                'location': photo['place']['location'],
-                'image_url': image_url
-            })
