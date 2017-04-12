@@ -3,8 +3,8 @@ language: python
 python:
   - "2.7"
 install:
-  - pip install awscli chalice
-  - pip install -r requirements.txt
+  - sudo pip install awscli chalice
+  - sudo pip install -r requirements.txt
 # safelist
 branches:
   only:
@@ -20,4 +20,4 @@ script:
   - echo "[default]" >> ~/.aws/config
   - echo "output = json" >> ~/.aws/config
   - echo "region = ap-southeast-2" >> ~/.aws/config
-  - chalice deploy
+  - sudo chalice deploy
