@@ -58,7 +58,6 @@ def get_recent_fb_photos(fb_access_token):
         )
         response_dict = response.json()
         while True:
-            print('looping')
             for photo in response_dict['data']:
                 if 'place' in photo.keys():
                     if 'location' in photo['place'].keys():
