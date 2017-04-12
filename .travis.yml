@@ -1,10 +1,10 @@
-sudo: required
+sudo: false
 language: python
 python:
   - "2.7"
 install:
-  - sudo pip install awscli chalice
-  - sudo pip install -r requirements.txt
+  - pip install --user awscli chalice
+  - pip install --user -r requirements.txt
 # safelist
 branches:
   only:
@@ -20,4 +20,4 @@ script:
   - echo "[default]" >> ~/.aws/config
   - echo "output = json" >> ~/.aws/config
   - echo "region = ap-southeast-2" >> ~/.aws/config
-  - sudo chalice deploy
+  - chalice deploy
