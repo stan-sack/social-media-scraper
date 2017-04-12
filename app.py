@@ -34,8 +34,12 @@ def get_facebook_photos():
         'https://graph.facebook.com/oauth/access_token',
         params=payload
     )
-    fb_access_token = response.text.split('=')[-1]
-    recent_fb_photos = get_recent_fb_photos(fb_access_token)
+    response_dict = response.json()
+    fb_access_token = response_dict['access_token']
+    try:
+        recent_fb_photos = get_recent_fb_photos(fb_access_token)
+    except Exception as e:
+        raise Exception('Error retrieving photos')
     return {'photos': recent_fb_photos}
 
 
@@ -44,7 +48,8 @@ def get_recent_fb_photos(fb_access_token):
     payload = {
         'type': 'uploaded',
         'access_token': fb_access_token,
-        'fields': 'place'
+        'fields': 'place',
+        'limit': 1000
     }
     try:
         response = requests.get(
@@ -52,27 +57,26 @@ def get_recent_fb_photos(fb_access_token):
             params=payload
         )
         response_dict = response.json()
-
-        while len(photos) < 20 and 'next' in response_dict['paging']:
+        while True:
+            print('looping')
             for photo in response_dict['data']:
                 if 'place' in photo.keys():
-                    photos.append({
-                        'caption': photo['place']['name'],
-                        'location': photo['place']['location'],
-                        'image_url': '{}/{}?access_token={}&fields=images'.format(FB_BASE_URL, photo['id'], fb_access_token)
-                    })
+                    if 'location' in photo['place'].keys():
+                        photos.append({
+                            'caption': photo['place']['name'],
+                            'location': photo['place']['location'],
+                            'image_url': '{}/{}?access_token={}&fields=images'.format(FB_BASE_URL, photo['id'], fb_access_token)
+                        })
+            if not (len(photos) < 20 and 'next' in response_dict['paging']):
+                break
             response = requests.get(response_dict['paging']['next'])
             response_dict = response.json()
-        photos.append({
-            'caption': photo['place']['name'],
-            'location': photo['place']['location'],
-            'image_url': '{}/{}?access_token={}&fields=images'.format(FB_BASE_URL, photo['id'], fb_access_token)
-        })
+
         requests_to_send = (grequests.get(photo['image_url']) for photo in photos)
         results_array = grequests.map(requests_to_send)
         for i in range(len(results_array)):
             response_dict = results_array[i].json()
             photos[i]['image_url'] = response_dict['images'][0]['source']
     except Exception as e:
-        print(e)
+        raise
     return photos
